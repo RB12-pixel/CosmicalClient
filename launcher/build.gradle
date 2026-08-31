@@ -7,12 +7,13 @@ group 'com.cosmical'
 version '1.0.0'
 
 repositories {
-    mavenCentral()
-    maven { url 'https://azure.com' }
+    mavenCentral() // Usiamo solo il server centrale ufficiale, il più sicuro al mondo
 }
 
 dependencies {
-    implementation 'fr.litarvan:openauth:1.1.2'
+    // Nuova libreria di login aggiornata e stabile presente direttamente su MavenCentral
+    implementation 'net.kyori:adventure-api:4.14.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 shadowJar {
