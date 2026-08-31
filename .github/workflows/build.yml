@@ -25,10 +25,10 @@ jobs:
     - name: Compila il Launcher (.exe base)
       run: |
         cd launcher
-        gradle shadowJar
+        gradle jar
 
     - name: Invia il Launcher Pronto
       uses: actions/upload-artifact@v4
       with:
         name: Cosmical-Launcher-Pronto
-        path: launcher/build/libs/*-completo.jar
+        path: launcher/build/libs/*.jar
