@@ -1,21 +1,27 @@
 plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'application' // Il plugin ufficiale di Gradle per creare i programmi .jar eseguibili
 }
 
 group 'com.cosmical'
 version '1.0.0'
 
 repositories {
-    mavenCentral() // Usiamo solo il server centrale ufficiale, il più sicuro al mondo
+    mavenCentral()
 }
 
 dependencies {
-    // Nuova libreria di login aggiornata e stabile presente direttamente su MavenCentral
-    implementation 'net.kyori:adventure-api:4.14.0'
-    implementation 'com.google.code.gson:gson:2.10.1'
+    // Non servono librerie esterne buggate, fa tutto Java nativo!
 }
 
-shadowJar {
-    archiveClassifier.set('completo')
+application {
+    // Diciamo a Gradle quale file deve cliccare per primo all'avvio
+    mainClass = 'com.cosmical.launcher.MainLauncher'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'com.cosmical.launcher.MainLauncher'
+        )
+    }
 }
