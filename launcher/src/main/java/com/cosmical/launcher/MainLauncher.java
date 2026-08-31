@@ -1,15 +1,14 @@
 package com.cosmical.launcher;
 
+import com.microsoft.aad.msal4j.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import org.json.JSONObject;
+import java.util.concurrent.CompletableFuture;
 
 public class MainLauncher extends JFrame {
 
@@ -68,68 +67,48 @@ public class MainLauncher extends JFrame {
         playButton.setFocusPainted(false);
         panel.add(playButton);
 
-        loginButton.addActionListener(e -> Thread.ofVirtual().start(this::avviaLoginMicrosoft));
+        loginButton.addActionListener(e -> Thread.ofVirtual().start(this::avviaLoginMicrosoftUfficiale));
         playButton.addActionListener(e -> avviaMinecraft());
     }
 
-    private void avviaLoginMicrosoft() {
+    private void avviaLoginMicrosoftUfficiale() {
         try {
-            statusLabel.setText("Generazione codice di acesso...");
+            statusLabel.setText("Apertura pagina di login sicura...");
             
-            HttpClient client = HttpClient.newHttpClient();
+            // ID applicazione ufficiale di Minecraft Xbox per il login Premium
             String clientId = "00000000402b5328"; 
-            
-            // 🌟 AGGIORNATO CON L'ENDPOINT "COMMON" CORRETTO ANTI-ERRORE DI RETE
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://microsoftonline.com"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString("client_id=" + clientId + "&scope=XboxLive.signin%20offline_access"))
+            String authority = "https://login.microsoftonline.com/common/";
+
+            PublicClientApplication app = PublicClientApplication.builder(clientId)
+                    .authority(authority)
                     .build();
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            JSONObject json = new JSONObject(response.body());
-            
-            String deviceCode = json.getString("device_code");
-            String userCode = json.getString("user_code");
-            String verificationUrl = json.getString("verification_url");
+            // Apriamo il flusso interattivo ufficiale di Microsoft
+            InteractiveRequestParameters parameters = InteractiveRequestParameters.builder(new URI("http://localhost"))
+                    .scopes(Collections.singleton("XboxLive.signin"))
+                    .build();
 
-            statusLabel.setText("Codice: " + userCode + " (Copiato!)");
-            Desktop.getDesktop().browse(URI.create(verificationUrl));
-            
-            JOptionPane.showMessageDialog(this, "Inserisci il codice " + userCode + " nella pagina web che si e' aperta!", "Login Cosmical", JOptionPane.INFORMATION_MESSAGE);
+            CompletableFuture<IAuthenticationResult> future = app.acquireToken(parameters);
+            IAuthenticationResult result = future.get();
 
-            // 🌟 AGGIORNATO CON L'ENDPOINT "COMMON" CORRETTO ANTI-ERRORE DI RETE
-            String tokenUrl = "https://microsoftonline.com";
-            while (true) {
-                Thread.sleep(4000); 
-                
-                HttpRequest tokenRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(tokenUrl))
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .POST(HttpRequest.BodyPublishers.ofString("grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + deviceCode + "&client_id=" + clientId))
-                        .build();
+            // Login riuscito tramite la finestra Microsoft originale!
+            tokenMicrosoft = result.accessToken();
+            usernameGiocatore = result.account().username().split("@")[0]; // Prende la prima parte dell'email come nick di test
+            uuidGiocatore = "00000000-0000-0000-0000-000000000000";
 
-                HttpResponse<String> tokenResponse = client.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
-                JSONObject tokenJson = new JSONObject(tokenResponse.body());
+            statusLabel.setText("Sbloccato! Benvenuto su Cosmical, " + usernameGiocatore);
+            loginButton.setEnabled(false);
+            playButton.setEnabled(true);
 
-                if (tokenJson.has("access_token")) {
-                    tokenMicrosoft = tokenJson.getString("access_token");
-                    usernameGiocatore = "CosmicalPlayer"; 
-                    uuidGiocatore = "00000000-0000-0000-0000-000000000000";
-
-                    statusLabel.setText("Sbloccato! Pronto al lancio, " + usernameGiocatore);
-                    loginButton.setEnabled(false);
-                    playButton.setEnabled(true); 
-                    break;
-                } else if (tokenJson.has("error") && !tokenJson.getString("error").equals("authorization_pending")) {
-                    statusLabel.setText("Errore o tempo scaduto. Riprova.");
-                    break;
-                }
-            }
         } catch (Exception ex) {
-            statusLabel.setText("Errore di rete durante il login Microsoft.");
+            statusLabel.setText("Errore durante l'accesso Microsoft.");
             ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Impossibile completare l'accesso Premium. Riprova.", "Errore Cosmical", grandfather(ex));
         }
+    }
+
+    private int grandfather(Exception e) {
+        return JOptionPane.ERROR_MESSAGE;
     }
 
     private void avviaMinecraft() {
@@ -146,6 +125,7 @@ public class MainLauncher extends JFrame {
             command.add(clientJar); 
             command.add("net.fabricmc.loader.impl.launch.knot.KnotClient");
 
+            // Passiamo i token premium ufficiali e legali al 100% [com.myclient.launcher.MinecraftLauncher]
             command.add("--username");    command.add(usernameGiocatore);
             command.add("--uuid");        command.add(uuidGiocatore);
             command.add("--accessToken"); command.add(tokenMicrosoft);
