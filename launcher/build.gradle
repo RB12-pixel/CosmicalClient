@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    // Non servono librerie esterne buggate, fa tutto Java nativo!
+    implementation 'org.json:json:20231013' // Libreria standard sicura per decodificare il login Microsoft
 }
 
 application {
