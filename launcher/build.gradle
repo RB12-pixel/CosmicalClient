@@ -1,5 +1,5 @@
 plugins {
-    id 'application' // Il plugin ufficiale di Gradle per creare i programmi .jar eseguibili
+    id 'application'
 }
 
 group 'com.cosmical'
@@ -10,11 +10,12 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.json:json:20231013' // Libreria standard sicura per decodificare il login Microsoft
+    // 🌟 La libreria ufficiale Microsoft per fare il login sicuro con la finestrella del browser
+    implementation 'com.microsoft.azure:msal4j:1.14.3'
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
 }
 
 application {
-    // Diciamo a Gradle quale file deve cliccare per primo all'avvio
     mainClass = 'com.cosmical.launcher.MainLauncher'
 }
 
